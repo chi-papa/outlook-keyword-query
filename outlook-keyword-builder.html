@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outlook キーワードビルダー</title>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;600;700;800&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ivory:      #f9f6ee;
+  --ivory2:     #f2ede0;
+  --ivory3:     #e8e0cc;
+  --cream:      #fffef9;
+  --parchment:  #ede7d4;
+  --brown:      #5c4528;
+  --brown2:     #7a5c38;
+  --brown3:     #9e7c52;
+  --brown-lt:   #c8a87a;
+  --brown-pale: #ecddc4;
+  --ink:        #28200e;
+  --ink2:       #3d3018;
+  --muted:      #8c7a60;
+  --muted2:     #b09878;
+  --sage:       #5e7358;
+  --sage2:      #7a9474;
+  --sage-lt:    #dfe8db;
+  --rust:       #7a3a18;
+  --rust-lt:    #f5e4da;
+  --gold:       #b8860b;
+  --gold-lt:    #f7f0da;
+  --border:     #ddd3bc;
+  --border2:    #c8bca0;
+  --shadow-sm:  0 1px 3px rgba(60,40,10,0.08);
+  --shadow:     0 3px 12px rgba(60,40,10,0.10);
+  --shadow-lg:  0 8px 32px rgba(60,40,10,0.13);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Noto Sans JP', sans-serif;
+  background: var(--ivory);
+  min-height: 100vh;
+  color: var(--ink);
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Paper texture */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+
+/* Decorative corner lines */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--brown) 0%, var(--brown-lt) 40%, transparent 100%);
+  z-index: 10;
+}
+
+.page {
+  position: relative; z-index: 1;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+/* ── HEADER ── */
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 36px;
+  animation: fadeUp .5s ease both;
+}
+.header-mark {
+  flex-shrink: 0;
+  width: 54px; height: 54px;
+  background: var(--brown);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  box-shadow: 0 4px 16px rgba(92,69,40,0.3);
+  position: relative;
+  overflow: hidden;
+}
+.header-mark::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, transparent 60%);
+}
+.header-text h1 {
+  font-family: 'Shippori Mincho B1', serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+.header-text p {
+  font-size: 12px;
+  font-weight: 300;
+  color: var(--muted);
+  margin-top: 5px;
+  line-height: 1.6;
+}
+
+/* ── MODE SELECTOR ── */
+.mode-tabs {
+  display: flex;
+  gap: 0;
+  background: var(--parchment);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-sm);
+  animation: fadeUp .5s .08s ease both;
+}
+.mode-tab {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .18s ease;
+  text-align: center;
+  line-height: 1.3;
+}
+.mode-tab small { font-size: 10px; display: block; font-weight: 300; opacity: .8; margin-top: 2px; }
+.mode-tab.active {
+  background: var(--cream);
+  color: var(--brown);
+  box-shadow: var(--shadow);
+  font-weight: 700;
+}
+.mode-tab.active small { opacity: 1; color: var(--brown3); }
+
+/* ── PANELS ── */
+.panel { display: none; animation: fadeUp .25s ease both; }
+.panel.active { display: block; }
+
+/* ── CARD ── */
+.card {
+  background: var(--cream);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.card-header {
+  padding: 14px 20px;
+  background: var(--ivory2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title {
+  font-family: 'Shippori Mincho B1', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brown);
+  letter-spacing: 0.8px;
+  display: flex; align-items: center; gap: 7px;
+}
+.card-title .icon { font-size: 15px; }
+.card-body { padding: 20px; }
+
+/* ── KEYWORD ROWS ── */
+.kw-stack { display: flex; flex-direction: column; }
+
+.kw-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.kw-index {
+  font-family: 'Shippori Mincho B1', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--brown-lt);
+  min-width: 18px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.kw-field {
+  flex: 1;
+  display: flex;
+  border: 1.5px solid var(--border2);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--ivory);
+  transition: border-color .18s, box-shadow .18s;
+}
+.kw-field:focus-within {
+  border-color: var(--brown2);
+  box-shadow: 0 0 0 3px rgba(122,92,56,0.12);
+}
+
+.kw-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 11px 14px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  outline: none;
+  min-width: 0;
+}
+.kw-input::placeholder { color: var(--brown-pale); }
+
+.exact-btn {
+  display: flex; align-items: center;
+  padding: 0 11px;
+  border-left: 1px solid var(--border);
+  cursor: pointer;
+  transition: background .12s;
+  gap: 4px;
+  user-select: none;
+  flex-shrink: 0;
+}
+.exact-btn:hover { background: var(--ivory2); }
+.exact-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+  color: var(--muted2);
+  background: transparent;
+  white-space: nowrap;
+  transition: all .15s;
+  letter-spacing: 0.3px;
+}
+.exact-btn.on .exact-tag {
+  background: var(--brown);
+  border-color: var(--brown);
+  color: var(--cream);
+}
+
+/* ── CONNECTOR ── */
+.connector-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0 6px 28px;
+}
+.conn-pipe {
+  width: 1.5px; height: 22px;
+  background: var(--border);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.conn-group {
+  display: flex;
+  border: 1.5px solid var(--border2);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--ivory2);
+}
+.conn-btn {
+  padding: 5px 15px;
+  border: none;
+  background: transparent;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted2);
+  cursor: pointer;
+  transition: all .12s;
+  letter-spacing: 0.5px;
+}
+.conn-btn + .conn-btn { border-left: 1.5px solid var(--border2); }
+.conn-btn.active.or  { background: var(--sage);  color: var(--cream); }
+.conn-btn.active.and { background: var(--brown2); color: var(--cream); }
+.conn-btn.active.not { background: var(--rust);   color: var(--cream); }
+.conn-btn:hover:not(.active) { background: var(--ivory3); color: var(--brown2); }
+
+.conn-hint {
+  font-size: 10px;
+  color: var(--muted2);
+  font-weight: 300;
+}
+
+/* ── EXCEPTION ROWS (振り分け) ── */
+.exc-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--rust);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin: 18px 0 10px;
+  display: flex; align-items: center; gap: 6px;
+  padding-top: 16px;
+  border-top: 1px dashed var(--border2);
+}
+
+/* ── DIVIDER ── */
+.section-divider {
+  display: flex; align-items: center; gap: 12px;
+  margin: 22px 0;
+}
+.section-divider::before, .section-divider::after {
+  content: ''; flex: 1; height: 1px; background: var(--border);
+}
+.section-divider span {
+  font-family: 'Shippori Mincho B1', serif;
+  font-size: 11px;
+  color: var(--brown-lt);
+  letter-spacing: 1.5px;
+  white-space: nowrap;
+}
+
+/* ── OUTPUT AREA ── */
+.output-area {
+  background: var(--brown);
+  border-radius: 12px;
+  padding: 18px 20px;
+  min-height: 64px;
+  position: relative;
+  overflow: hidden;
+}
+.output-area::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 140px; height: 140px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 50%;
+}
+.output-area::after {
+  content: '';
+  position: absolute;
+  bottom: -20px; left: -20px;
+  width: 80px; height: 80px;
+  background: rgba(255,255,255,0.03);
+  border-radius: 50%;
+}
+.output-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(240,230,200,0.45);
+  margin-bottom: 8px;
+  position: relative; z-index: 1;
+}
+.output-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 15px;
+  font-weight: 700;
+  color: #f0e6c0;
+  word-break: break-all;
+  line-height: 1.9;
+  position: relative; z-index: 1;
+  user-select: all;
+  transition: color .2s;
+}
+.output-text.empty {
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 13px;
+  font-weight: 300;
+  color: rgba(240,230,200,0.28);
+}
+
+/* ── COPY BUTTON ── */
+.btn-copy {
+  width: 100%;
+  margin-top: 12px;
+  padding: 13px 16px;
+  background: var(--sage);
+  color: var(--cream);
+  border: none;
+  border-radius: 10px;
+  font-family: 'Noto Sans JP', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 8px rgba(94,115,88,0.25);
+}
+.btn-copy:hover { background: #4e6248; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(94,115,88,0.35); }
+.btn-copy:active { transform: none; }
+.btn-copy.ok { background: var(--rust); box-shadow: none; }
+
+/* ── ALERT / NOTE ── */
+.alert {
+  display: none;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 9px;
+  font-size: 11px;
+  line-height: 1.7;
+  font-weight: 400;
+}
+.alert.show { display: block; }
+.alert.info  { background: var(--sage-lt);  border-left: 3px solid var(--sage);  color: var(--sage); }
+.alert.warn  { background: var(--rust-lt);  border-left: 3px solid var(--rust);  color: var(--rust); }
+.alert.gold  { background: var(--gold-lt);  border-left: 3px solid var(--gold);  color: var(--gold); }
+.alert b { font-weight: 700; }
+
+/* ── MULTI OUTPUT (振り分け) ── */
+.multi-outputs { display: flex; flex-direction: column; gap: 12px; }
+.output-group {}
+.output-group-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--brown3);
+  margin-bottom: 6px;
+  display: flex; align-items: center; gap: 6px;
+}
+.output-group-label .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--brown3);
+}
+
+/* ── GUIDE CHIP ── */
+.guide-chips {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 14px;
+}
+.guide-chip {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--ivory2);
+  border: 1px solid var(--border2);
+  color: var(--brown2);
+  cursor: pointer;
+  transition: all .12s;
+  user-select: none;
+}
+.guide-chip:hover { background: var(--brown-pale); border-color: var(--brown-lt); color: var(--brown); }
+.guide-chip.clicked { background: var(--brown); color: var(--cream); border-color: var(--brown); }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page > * {
+  animation: fadeUp .45s ease both;
+}
+.page > *:nth-child(1) { animation-delay: 0s; }
+.page > *:nth-child(2) { animation-delay: .06s; }
+.page > *:nth-child(3) { animation-delay: .12s; }
+
+/* Guide panel styles */
+.guide-rule-row { margin-bottom: 14px; }
+.guide-rule-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brown2);
+  letter-spacing: 0.5px;
+  margin-bottom: 7px;
+}
+.guide-kw-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 6px; }
+.copy-kw {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 6px;
+  background: var(--ivory2);
+  border: 1px solid var(--border2);
+  color: var(--brown);
+  cursor: pointer;
+  transition: all .12s;
+  user-select: none;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.copy-kw::after { content: '📋'; font-size: 10px; opacity: 0; transition: opacity .1s; }
+.copy-kw:hover { background: var(--brown-pale); border-color: var(--brown-lt); color: var(--brown); }
+.copy-kw:hover::after { opacity: 1; }
+.copy-kw.exc { background: var(--rust-lt); border-color: #e0b0a0; color: var(--rust); }
+.copy-kw.exc:hover { background: #f0d0c4; border-color: var(--rust); }
+.copy-kw.copied { background: var(--sage-lt); border-color: var(--sage); color: var(--sage); }
+.guide-rule-note {
+  font-size: 11px;
+  color: var(--sage);
+  font-weight: 500;
+  margin-top: 5px;
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-mark">📬</div>
+    <div class="header-text">
+      <h1>Outlook キーワードビルダー</h1>
+      <p>検索クエリ・自動振り分けルール用の文字列を正確に組み立てます</p>
+    </div>
+  </div>
+
+  <!-- MODE TABS -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" onclick="setMode('search')">
+      🔍 検索ボックス用
+      <small>検索クエリを作成</small>
+    </button>
+    <button class="mode-tab" onclick="setMode('rule')">
+      📂 振り分けルール用
+      <small>ウィザード条件を作成</small>
+    </button>
+    <button class="mode-tab" onclick="setMode('guide')">
+      🛒 通販スタッフ向け
+      <small>おすすめルール設計</small>
+    </button>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       PANEL A: 検索ボックス
+  ════════════════════════════════════════ -->
+  <div class="panel active" id="panel-search">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">⌨️</span>キーワードを入力</div>
+      </div>
+      <div class="card-body">
+
+        <div class="kw-stack">
+          <!-- KW1 -->
+          <div class="kw-row">
+            <span class="kw-index">1</span>
+            <div class="kw-field">
+              <input class="kw-input" id="s_kw1" type="text" placeholder="例：営業 田中" oninput="updateSearch()">
+              <div class="exact-btn on" id="s_ex1" onclick="toggleExact('s',1)">
+                <span class="exact-tag">完全一致</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conn 1→2 -->
+          <div class="connector-row">
+            <div class="conn-pipe"></div>
+            <div class="conn-group">
+              <button class="conn-btn or active"  id="s_c1_or"  onclick="setConn('s',1,'or')">OR</button>
+              <button class="conn-btn and"         id="s_c1_and" onclick="setConn('s',1,'and')">AND</button>
+              <button class="conn-btn not"         id="s_c1_not" onclick="setConn('s',1,'not')">NOT</button>
+            </div>
+            <span class="conn-hint" id="s_c1_hint">どちらかを含む</span>
+          </div>
+
+          <!-- KW2 -->
+          <div class="kw-row">
+            <span class="kw-index">2</span>
+            <div class="kw-field">
+              <input class="kw-input" id="s_kw2" type="text" placeholder="例：営業所止め" oninput="updateSearch()">
+              <div class="exact-btn on" id="s_ex2" onclick="toggleExact('s',2)">
+                <span class="exact-tag">完全一致</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conn 2→3 -->
+          <div class="connector-row">
+            <div class="conn-pipe"></div>
+            <div class="conn-group">
+              <button class="conn-btn or active"  id="s_c2_or"  onclick="setConn('s',2,'or')">OR</button>
+              <button class="conn-btn and"         id="s_c2_and" onclick="setConn('s',2,'and')">AND</button>
+              <button class="conn-btn not"         id="s_c2_not" onclick="setConn('s',2,'not')">NOT</button>
+            </div>
+            <span class="conn-hint" id="s_c2_hint">どちらかを含む</span>
+          </div>
+
+          <!-- KW3 -->
+          <div class="kw-row">
+            <span class="kw-index">3</span>
+            <div class="kw-field">
+              <input class="kw-input" id="s_kw3" type="text" placeholder="（任意）" oninput="updateSearch()">
+              <div class="exact-btn on" id="s_ex3" onclick="toggleExact('s',3)">
+                <span class="exact-tag">完全一致</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- よく使うキーワード -->
+        <div class="section-divider"><span>よく使うキーワード</span></div>
+        <div class="guide-chips" id="s_chips">
+          <span class="guide-chip" onclick="insertChip('s','請求書')">請求書</span>
+          <span class="guide-chip" onclick="insertChip('s','invoice')">invoice</span>
+          <span class="guide-chip" onclick="insertChip('s','営業所止め')">営業所止め</span>
+          <span class="guide-chip" onclick="insertChip('s','【重要】')">【重要】</span>
+          <span class="guide-chip" onclick="insertChip('s','見積書')">見積書</span>
+          <span class="guide-chip" onclick="insertChip('s','URGENT')">URGENT</span>
+          <span class="guide-chip" onclick="insertChip('s','議事録')">議事録</span>
+          <span class="guide-chip" onclick="insertChip('s','お問い合わせ')">お問い合わせ</span>
+          <span class="guide-chip" onclick="insertChip('s','発送完了')">発送完了</span>
+        </div>
+
+        <div class="section-divider"><span>検索クエリ</span></div>
+
+        <div class="output-area">
+          <div class="output-label">OUTLOOK 検索ボックスに貼り付け</div>
+          <div class="output-text empty" id="s_output">キーワードを入力すると生成されます</div>
+        </div>
+        <button class="btn-copy" id="s_copy" onclick="doCopy('s')">📋 コピーする</button>
+        <div class="alert" id="s_alert"></div>
+
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ═══════════════════════════════════════
+       PANEL B: 自動振り分けルール
+  ════════════════════════════════════════ -->
+  <div class="panel" id="panel-rule">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">✅</span>条件キーワード（含む）</div>
+      </div>
+      <div class="card-body">
+
+        <div class="kw-stack">
+          <!-- KW1 -->
+          <div class="kw-row">
+            <span class="kw-index">1</span>
+            <div class="kw-field">
+              <input class="kw-input" id="r_kw1" type="text" placeholder="例：お問い合わせ" oninput="updateRule()">
+              <div class="exact-btn on" id="r_ex1" onclick="toggleExact('r',1)">
+                <span class="exact-tag">完全一致</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conn 1→2 (振り分けはORのみ) -->
+          <div class="connector-row">
+            <div class="conn-pipe"></div>
+            <div class="conn-group">
+              <button class="conn-btn or active" id="r_c1_or" onclick="setConn('r',1,'or')">OR</button>
+              <button class="conn-btn and"        id="r_c1_and" onclick="setConn('r',1,'and')">AND</button>
+            </div>
+            <span class="conn-hint" id="r_c1_hint">どちらかを含む</span>
+          </div>
+
+          <!-- KW2 -->
+          <div class="kw-row">
+            <span class="kw-index">2</span>
+            <div class="kw-field">
+              <input class="kw-input" id="r_kw2" type="text" placeholder="例：注文番号" oninput="updateRule()">
+              <div class="exact-btn on" id="r_ex2" onclick="toggleExact('r',2)">
+                <span class="exact-tag">完全一致</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conn 2→3 -->
+          <div class="connector-row">
+            <div class="conn-pipe"></div>
+            <div class="conn-group">
+              <button class="conn-btn or active" id="r_c2_or" onclick="setConn('r',2,'or')">OR</button>
+              <button class="conn-btn and"        id="r_c2_and" onclick="setConn('r',2,'and')">AND</button>
+            </div>
+            <span class="conn-hint" id="r_c2_hint">どちらかを含む</span>
+          </div>
+
+          <!-- KW3 -->
+          <div class="kw-row">
+            <span class="kw-index">3</span>
+            <div class="kw-field">
+              <input class="kw-input" id="r_kw3" type="text" placeholder="（任意）" oninput="updateRule()">
+              <div class="exact-btn on" id="r_ex3" onclick="toggleExact('r',3)">
+                <span class="exact-tag">完全一致</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 除外キーワード -->
+        <div class="exc-label">🚫 例外条件（除外キーワード）</div>
+
+        <div class="kw-stack">
+          <div class="kw-row">
+            <span class="kw-index" style="color:var(--rust)">除</span>
+            <div class="kw-field" style="border-color:#d4a898;">
+              <input class="kw-input" id="r_ex_1" type="text" placeholder="例：注文内容ご確認" oninput="updateRule()" style="color:var(--rust);">
+              <div class="exact-btn on" id="r_eex1" onclick="toggleExact('r_e',1)" style="border-left-color:#d4a898;">
+                <span class="exact-tag">完全一致</span>
+              </div>
+            </div>
+          </div>
+          <div style="height:8px"></div>
+          <div class="kw-row">
+            <span class="kw-index" style="color:var(--rust)">除</span>
+            <div class="kw-field" style="border-color:#d4a898;">
+              <input class="kw-input" id="r_ex_2" type="text" placeholder="例：発送完了" oninput="updateRule()" style="color:var(--rust);">
+              <div class="exact-btn on" id="r_eex2" onclick="toggleExact('r_e',2)" style="border-left-color:#d4a898;">
+                <span class="exact-tag">完全一致</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- よく使うキーワード -->
+        <div class="section-divider"><span>よく使うキーワード</span></div>
+        <div class="guide-chips">
+          <span class="guide-chip" onclick="insertChip('r','お問い合わせ')">お問い合わせ</span>
+          <span class="guide-chip" onclick="insertChip('r','注文番号')">注文番号</span>
+          <span class="guide-chip" onclick="insertChip('r','請求書')">請求書</span>
+          <span class="guide-chip" onclick="insertChip('r','【重要】')">【重要】</span>
+          <span class="guide-chip" onclick="insertChip('r','あんしんメルアドサービス')">あんしんメルアドサービス</span>
+          <span class="guide-chip" onclick="insertChip('r','@v7.rakuten.ne.jp')">@v7.rakuten.ne.jp</span>
+          <span class="guide-chip" onclick="insertChip('r','議事録')">議事録</span>
+          <span class="guide-chip" onclick="insertChip('r','Weekly Report')">Weekly Report</span>
+        </div>
+
+        <!-- フリードメイン -->
+        <div class="section-divider"><span>📱 個人フリーメール ドメイン</span></div>
+        <div class="alert info show" style="margin-bottom:10px; font-size:11px;">
+          💡 「差出人のアドレスに特定の文字が含まれる場合」の条件で使います。1つずつキーワード欄に追加してください。
+        </div>
+        <div class="guide-chips">
+          <span class="guide-chip" onclick="insertChip('r','@gmail.com')">@gmail.com</span>
+          <span class="guide-chip" onclick="insertChip('r','@yahoo.co.jp')">@yahoo.co.jp</span>
+          <span class="guide-chip" onclick="insertChip('r','@yahoo.com')">@yahoo.com</span>
+          <span class="guide-chip" onclick="insertChip('r','@icloud.com')">@icloud.com</span>
+          <span class="guide-chip" onclick="insertChip('r','@me.com')">@me.com</span>
+          <span class="guide-chip" onclick="insertChip('r','@outlook.jp')">@outlook.jp</span>
+          <span class="guide-chip" onclick="insertChip('r','@outlook.com')">@outlook.com</span>
+          <span class="guide-chip" onclick="insertChip('r','@hotmail.com')">@hotmail.com</span>
+          <span class="guide-chip" onclick="insertChip('r','@hotmail.co.jp')">@hotmail.co.jp</span>
+          <span class="guide-chip" onclick="insertChip('r','@live.jp')">@live.jp</span>
+          <span class="guide-chip" onclick="insertChip('r','@docomo.ne.jp')">@docomo.ne.jp</span>
+          <span class="guide-chip" onclick="insertChip('r','@ezweb.ne.jp')">@ezweb.ne.jp</span>
+          <span class="guide-chip" onclick="insertChip('r','@au.com')">@au.com</span>
+          <span class="guide-chip" onclick="insertChip('r','@softbank.ne.jp')">@softbank.ne.jp</span>
+          <span class="guide-chip" onclick="insertChip('r','@i.softbank.jp')">@i.softbank.jp</span>
+          <span class="guide-chip" onclick="insertChip('r','@nifty.com')">@nifty.com</span>
+          <span class="guide-chip" onclick="insertChip('r','@excite.co.jp')">@excite.co.jp</span>
+          <span class="guide-chip" onclick="insertChip('r','@protonmail.com')">@protonmail.com</span>
+        </div>
+
+        <div class="section-divider"><span>ウィザードへの入力内容</span></div>
+
+        <!-- Multi output -->
+        <div class="multi-outputs">
+          <!-- 条件 -->
+          <div class="output-group">
+            <div class="output-group-label">
+              <span class="dot" style="background:var(--sage)"></span>
+              「文字の指定」ボックスに入力（条件）
+            </div>
+            <div class="output-area" style="background:var(--sage);">
+              <div class="output-label">条件キーワード</div>
+              <div class="output-text empty" id="r_output_inc">キーワードを入力すると生成されます</div>
+            </div>
+            <button class="btn-copy" id="r_copy_inc" onclick="doCopy('r_inc')" style="background:var(--sage);">📋 条件キーワードをコピー</button>
+          </div>
+
+          <!-- 除外 -->
+          <div class="output-group" id="r_exc_group" style="display:none">
+            <div class="output-group-label">
+              <span class="dot" style="background:var(--rust)"></span>
+              「例外条件」の「文字の指定」に入力（除外）
+            </div>
+            <div class="output-area" style="background:var(--rust);">
+              <div class="output-label">除外キーワード</div>
+              <div class="output-text empty" id="r_output_exc">除外キーワードを入力すると生成されます</div>
+            </div>
+            <button class="btn-copy" id="r_copy_exc" onclick="doCopy('r_exc')" style="background:var(--rust);">📋 除外キーワードをコピー</button>
+          </div>
+        </div>
+
+        <div class="alert" id="r_alert"></div>
+
+      </div>
+    </div>
+
+  </div>
+
+
+  <!-- ═══════════════════════════════════════
+       PANEL C: 通販スタッフ ガイドライン
+  ════════════════════════════════════════ -->
+  <div class="panel" id="panel-guide">
+
+    <!-- 概要 -->
+    <div class="alert info show" style="margin-bottom:16px; font-size:12px; line-height:1.8;">
+      <b>📌 基本方針</b>：Outlookの仕分けルールは<b>上から順に評価</b>されます。優先度の高いルールを上に置くことが重要です。<br>
+      「文字の指定」ダイアログでは<b>追加ボタンで複数キーワードをOR条件で一括登録</b>できます。
+    </div>
+
+    <!-- ルール1: 楽天 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">①</span>【最優先・上流】楽天メール受信フォルダ</div>
+        <span style="font-size:10px;color:var(--rust);font-weight:700;">優先度 最高</span>
+      </div>
+      <div class="card-body">
+        <div class="alert warn show" style="margin-bottom:14px;">
+          ⚠️ 楽天のメールアドレスは暗号化されているため、ドメインでまず全部受け取り、そこから下流ルールで仕分けるのが効果的です。
+        </div>
+        <div class="guide-rule-row">
+          <div class="guide-rule-label">条件：差出人のアドレスに含む</div>
+          <div class="guide-kw-list">
+            <span class="copy-kw" onclick="copyKw(this)">@rakuten.co.jp</span>
+            <span class="copy-kw" onclick="copyKw(this)">@v7.rakuten.ne.jp</span>
+            <span class="copy-kw" onclick="copyKw(this)">@rakuten.ne.jp</span>
+            <span class="copy-kw" onclick="copyKw(this)">noreply@rakuten</span>
+          </div>
+          <div class="guide-rule-note">→ フォルダ「📦 楽天_全受信」へ移動</div>
+        </div>
+
+        <div class="section-divider"><span>下流ルール（楽天フォルダ内をさらに振り分け）</span></div>
+
+        <div class="guide-rule-row" style="margin-bottom:12px;">
+          <div class="guide-rule-label">② お客様からの問い合わせ（件名・本文に含む）</div>
+          <div class="guide-kw-list">
+            <span class="copy-kw" onclick="copyKw(this)">お問い合わせ</span>
+            <span class="copy-kw" onclick="copyKw(this)">【楽天市場】お問い合わせ</span>
+            <span class="copy-kw" onclick="copyKw(this)">注文番号</span>
+            <span class="copy-kw" onclick="copyKw(this)">あんしんメルアドサービス</span>
+          </div>
+          <div class="guide-rule-note">→ フォルダ「👤 お客様対応」へ移動</div>
+        </div>
+
+        <div class="guide-rule-row">
+          <div class="guide-rule-label">③ 自動通知・除外（例外条件に設定）</div>
+          <div class="guide-kw-list">
+            <span class="copy-kw exc" onclick="copyKw(this)">注文内容ご確認</span>
+            <span class="copy-kw exc" onclick="copyKw(this)">発送完了</span>
+            <span class="copy-kw exc" onclick="copyKw(this)">お支払い確認</span>
+            <span class="copy-kw exc" onclick="copyKw(this)">レビュー</span>
+            <span class="copy-kw exc" onclick="copyKw(this)">メルマガ</span>
+            <span class="copy-kw exc" onclick="copyKw(this)">【楽天】</span>
+          </div>
+          <div class="guide-rule-note" style="color:var(--rust);">→ フォルダ「🔔 楽天_自動通知」へ移動（除外設定）</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ルール2: お客様（個人） -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">②</span>お客様からのメール（直接メール・返信）</div>
+        <span style="font-size:10px;color:var(--brown2);font-weight:700;">優先度 高</span>
+      </div>
+      <div class="card-body">
+        <div class="alert gold show" style="margin-bottom:14px;">
+          💡 フリーメールドメインで個人からの直接メールを拾います。<b>ドメインごとに1つずつルールを作成</b>し、すべて同じ「お客様対応」フォルダへ。
+        </div>
+        <div class="guide-rule-label" style="margin-bottom:8px;">条件：差出人のアドレスに含む（1ドメイン＝1ルール）</div>
+        <div class="guide-kw-list" style="margin-bottom:10px;">
+          <span class="copy-kw" onclick="copyKw(this)">@gmail.com</span>
+          <span class="copy-kw" onclick="copyKw(this)">@yahoo.co.jp</span>
+          <span class="copy-kw" onclick="copyKw(this)">@yahoo.com</span>
+          <span class="copy-kw" onclick="copyKw(this)">@icloud.com</span>
+          <span class="copy-kw" onclick="copyKw(this)">@me.com</span>
+          <span class="copy-kw" onclick="copyKw(this)">@outlook.jp</span>
+          <span class="copy-kw" onclick="copyKw(this)">@outlook.com</span>
+          <span class="copy-kw" onclick="copyKw(this)">@hotmail.com</span>
+          <span class="copy-kw" onclick="copyKw(this)">@hotmail.co.jp</span>
+          <span class="copy-kw" onclick="copyKw(this)">@live.jp</span>
+          <span class="copy-kw" onclick="copyKw(this)">@docomo.ne.jp</span>
+          <span class="copy-kw" onclick="copyKw(this)">@ezweb.ne.jp</span>
+          <span class="copy-kw" onclick="copyKw(this)">@au.com</span>
+          <span class="copy-kw" onclick="copyKw(this)">@softbank.ne.jp</span>
+          <span class="copy-kw" onclick="copyKw(this)">@i.softbank.jp</span>
+          <span class="copy-kw" onclick="copyKw(this)">@nifty.com</span>
+          <span class="copy-kw" onclick="copyKw(this)">@excite.co.jp</span>
+          <span class="copy-kw" onclick="copyKw(this)">@protonmail.com</span>
+        </div>
+        <div class="guide-rule-note">→ フォルダ「👤 お客様対応」へ移動</div>
+
+        <div class="section-divider"><span>返信メール補足</span></div>
+        <div class="guide-rule-label" style="margin-bottom:8px;">件名に含む（Re: がついた返信を補足）</div>
+        <div class="guide-kw-list">
+          <span class="copy-kw" onclick="copyKw(this)">Re:</span>
+          <span class="copy-kw" onclick="copyKw(this)">RE:</span>
+          <span class="copy-kw" onclick="copyKw(this)">返信</span>
+        </div>
+        <div class="guide-rule-note" style="color:var(--muted);">※ 差出人ドメインのルールと組み合わせてAND条件で使う場合に有効</div>
+      </div>
+    </div>
+
+    <!-- ルール3: 見積依頼 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">③</span>見積依頼メール</div>
+        <span style="font-size:10px;color:var(--brown2);font-weight:700;">優先度 高</span>
+      </div>
+      <div class="card-body">
+        <div class="alert info show" style="margin-bottom:14px;">
+          💡 見積依頼は<b>本文中に含まれる</b>ことが多いため「本文にテキストが含まれる場合」の条件を使います。
+        </div>
+        <div class="guide-rule-label" style="margin-bottom:8px;">本文に含む（「追加」ボタンで一括登録）</div>
+        <div class="guide-kw-list">
+          <span class="copy-kw" onclick="copyKw(this)">見積</span>
+          <span class="copy-kw" onclick="copyKw(this)">お見積り</span>
+          <span class="copy-kw" onclick="copyKw(this)">見積書</span>
+          <span class="copy-kw" onclick="copyKw(this)">お見積もり</span>
+          <span class="copy-kw" onclick="copyKw(this)">見積依頼</span>
+          <span class="copy-kw" onclick="copyKw(this)">価格を教えて</span>
+          <span class="copy-kw" onclick="copyKw(this)">いくらですか</span>
+          <span class="copy-kw" onclick="copyKw(this)">料金を知りたい</span>
+          <span class="copy-kw" onclick="copyKw(this)">quotation</span>
+          <span class="copy-kw" onclick="copyKw(this)">estimate</span>
+        </div>
+        <div class="guide-rule-note">→ フォルダ「💴 見積依頼」へ移動</div>
+      </div>
+    </div>
+
+    <!-- ルール4: 取引先 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">④</span>取引先・仕入先からのメール</div>
+        <span style="font-size:10px;color:var(--muted);font-weight:700;">優先度 中</span>
+      </div>
+      <div class="card-body">
+        <div class="alert info show" style="margin-bottom:14px;">
+          💡 取引先は<b>会社ドメイン（@以降）</b>で設定します。同じフォルダでOKなら「追加」で複数ドメインを1ルールにまとめられます。
+        </div>
+        <div class="guide-rule-label" style="margin-bottom:8px;">差出人のアドレスに含む（例）</div>
+        <div class="guide-kw-list">
+          <span class="copy-kw" onclick="copyKw(this)">@取引先A.co.jp</span>
+          <span class="copy-kw" onclick="copyKw(this)">@取引先B.com</span>
+          <span class="copy-kw" onclick="copyKw(this)">@メーカーC.co.jp</span>
+        </div>
+        <div class="guide-rule-note">→ フォルダ「🏢 取引先」へ移動（ドメインを実際のものに書き換えてください）</div>
+      </div>
+    </div>
+
+    <!-- ルール5: メーカー -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">⑤</span>メーカー特有の件名パターン</div>
+        <span style="font-size:10px;color:var(--muted);font-weight:700;">優先度 中</span>
+      </div>
+      <div class="card-body">
+        <div class="alert gold show" style="margin-bottom:14px;">
+          💡 メーカーごとに<b>件名の書き方に特徴</b>があります。件名条件で個別にルールを作成してください。「追加」で複数パターンをOR登録できます。
+        </div>
+        <div class="guide-rule-label" style="margin-bottom:8px;">件名に含む（例：農業資材系）</div>
+        <div class="guide-kw-list">
+          <span class="copy-kw" onclick="copyKw(this)">【出荷案内】</span>
+          <span class="copy-kw" onclick="copyKw(this)">【納品書】</span>
+          <span class="copy-kw" onclick="copyKw(this)">【受注確認】</span>
+          <span class="copy-kw" onclick="copyKw(this)">【価格改定】</span>
+          <span class="copy-kw" onclick="copyKw(this)">【欠品】</span>
+          <span class="copy-kw" onclick="copyKw(this)">【入荷予定】</span>
+          <span class="copy-kw" onclick="copyKw(this)">品番</span>
+          <span class="copy-kw" onclick="copyKw(this)">ロット</span>
+        </div>
+        <div class="guide-rule-note">→ フォルダ「📦 メーカー通知」へ（メーカーごとに件名パターンを追加）</div>
+      </div>
+    </div>
+
+    <!-- フォルダ構成 -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title"><span class="icon">📁</span>推奨フォルダ構成＆ルール優先順位</div>
+      </div>
+      <div class="card-body">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:12px; line-height:2; color:var(--ink2); background:var(--ivory2); border-radius:8px; padding:14px 16px; border:1px solid var(--border);">
+          受信トレイ<br>
+          ├─ 📦 楽天_全受信　　　← ① 最上位<br>
+          │&nbsp;&nbsp;&nbsp;├─ 👤 楽天_お客様対応<br>
+          │&nbsp;&nbsp;&nbsp;└─ 🔔 楽天_自動通知<br>
+          ├─ 👤 お客様対応　　　← ② フリーメール・直接<br>
+          ├─ 💴 見積依頼　　　　← ③<br>
+          ├─ 🏢 取引先　　　　　← ④<br>
+          └─ 📦 メーカー通知　　← ⑤
+        </div>
+        <div class="alert info show" style="margin-top:12px; font-size:11px;">
+          ✓ ルールは<b>上位のものが優先</b>されます。楽天を最上位にすることで、フリーメールドメインルールが楽天メールを誤って拾うのを防げます。<br>
+          ✓ <b>「文字の指定」ダイアログで「追加」を繰り返せば複数キーワードをOR条件で一括登録</b>できます。ドメインが多い場合もこの方法で1ルールにまとめられます。
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /panel-guide -->
+
+</div><!-- /page -->
+
+<script>
+// ═══════════════ STATE ═══════════════
+const state = {
+  s:   { exact: {1:true,2:true,3:true}, conn: {1:'or',2:'or'} },
+  r:   { exact: {1:true,2:true,3:true}, conn: {1:'or',2:'or'} },
+  r_e: { exact: {1:true,2:true} }
+};
+
+const connHints = { or:'どちらかを含む', and:'両方を含む', not:'を含まない' };
+
+// ═══════════════ MODE ═══════════════
+function setMode(m) {
+  const modes = ['search','rule','guide'];
+  document.querySelectorAll('.mode-tab').forEach((t,i)=> t.classList.toggle('active', modes[i]===m));
+  document.getElementById('panel-search').classList.toggle('active', m==='search');
+  document.getElementById('panel-rule').classList.toggle('active', m==='rule');
+  document.getElementById('panel-guide').classList.toggle('active', m==='guide');
+}
+
+// ═══════════════ EXACT TOGGLE ═══════════════
+function toggleExact(ns, n) {
+  state[ns].exact[n] = !state[ns].exact[n];
+  const el = document.getElementById((ns==='r_e'?'r_eex':'')+(ns==='s'?'s_ex':ns==='r'?'r_ex':'r_eex')+n);
+  if (el) el.classList.toggle('on', state[ns].exact[n]);
+  ns==='s'? updateSearch() : updateRule();
+}
+
+// exact toggle for rule exclude
+const origToggle = toggleExact;
+window.toggleExact = function(ns, n) {
+  if (!state[ns]) return;
+  state[ns].exact[n] = !state[ns].exact[n];
+  let elId;
+  if (ns==='s')   elId = 's_ex'+n;
+  if (ns==='r')   elId = 'r_ex'+n;
+  if (ns==='r_e') elId = 'r_eex'+n;
+  const el = document.getElementById(elId);
+  if (el) el.classList.toggle('on', state[ns].exact[n]);
+  ns==='s'? updateSearch() : updateRule();
+};
+
+// ═══════════════ CONNECTOR ═══════════════
+function setConn(ns, n, val) {
+  state[ns].conn[n] = val;
+  ['or','and','not'].forEach(v => {
+    const btn = document.getElementById(ns+'_c'+n+'_'+v);
+    if (btn) { btn.className = 'conn-btn '+v+(v===val?' active':''); }
+  });
+  const hint = document.getElementById(ns+'_c'+n+'_hint');
+  if (hint) hint.textContent = connHints[val] || '';
+  ns==='s'? updateSearch() : updateRule();
+}
+
+// ═══════════════ FORMAT ═══════════════
+function fmt(val, exact) {
+  if (!val) return null;
+  return exact ? '"'+val+'"' : val;
+}
+
+function join(a, b, op) {
+  if (!a && !b) return null;
+  if (!a) return b;
+  if (!b) return a;
+  if (op==='or')  return a+';'+b;
+  if (op==='and') return a+' AND '+b;
+  if (op==='not') return a+' NOT '+b;
+  return a+';'+b;
+}
+
+// ═══════════════ SEARCH UPDATE ═══════════════
+function updateSearch() {
+  const v1 = document.getElementById('s_kw1').value.trim();
+  const v2 = document.getElementById('s_kw2').value.trim();
+  const v3 = document.getElementById('s_kw3').value.trim();
+  const f1 = fmt(v1, state.s.exact[1]);
+  const f2 = fmt(v2, state.s.exact[2]);
+  const f3 = fmt(v3, state.s.exact[3]);
+
+  const out = document.getElementById('s_output');
+  const alert = document.getElementById('s_alert');
+
+  if (!f1 && !f2 && !f3) {
+    out.textContent='キーワードを入力すると生成されます'; out.className='output-text empty';
+    alert.className='alert'; return;
+  }
+
+  let result = f1 || '';
+  if (f2) result = join(result||null, f2, state.s.conn[1]) || f2;
+  if (f3) result = join(result||null, f3, state.s.conn[2]) || f3;
+
+  out.textContent = result;
+  out.className = 'output-text';
+
+  // Note
+  const hasNot = state.s.conn[1]==='not'||state.s.conn[2]==='not';
+  const hasAnd = state.s.conn[1]==='and'||state.s.conn[2]==='and';
+  if (hasNot) {
+    alert.innerHTML='⚠️ <b>NOT</b> 演算子はOutlookの検索ボックスでは <b>subject:keyword NOT keyword2</b> 形式が確実です。仕分けルールでは「例外条件」タブをご利用ください。';
+    alert.className='alert warn show';
+  } else if (hasAnd) {
+    alert.innerHTML='✓ <b>AND</b> はOutlookの検索ボックスで有効です（スペース区切りも同等）。';
+    alert.className='alert gold show';
+  } else {
+    alert.innerHTML='✓ <b>OR</b>（セミコロン区切り）はOutlook検索で有効です。';
+    alert.className='alert info show';
+  }
+}
+
+// ═══════════════ RULE UPDATE ═══════════════
+function updateRule() {
+  const v1 = document.getElementById('r_kw1').value.trim();
+  const v2 = document.getElementById('r_kw2').value.trim();
+  const v3 = document.getElementById('r_kw3').value.trim();
+  const e1 = document.getElementById('r_ex_1').value.trim();
+  const e2 = document.getElementById('r_ex_2').value.trim();
+
+  const f1 = fmt(v1, state.r.exact[1]);
+  const f2 = fmt(v2, state.r.exact[2]);
+  const f3 = fmt(v3, state.r.exact[3]);
+  const fe1 = fmt(e1, state['r_e'].exact[1]);
+  const fe2 = fmt(e2, state['r_e'].exact[2]);
+
+  const outInc = document.getElementById('r_output_inc');
+  const alert  = document.getElementById('r_alert');
+
+  // 条件
+  let incResult = '';
+  const hasAnd = (f1&&f2&&state.r.conn[1]==='and') || (f2&&f3&&state.r.conn[2]==='and');
+
+  if (!f1 && !f2 && !f3) {
+    outInc.textContent='キーワードを入力すると生成されます'; outInc.className='output-text empty';
+  } else {
+    // OR → セミコロン区切り、AND → 別ルール扱い（個別表示）
+    const parts = [f1,f2,f3].filter(Boolean);
+    if (hasAnd) {
+      // ANDの場合はそれぞれ別行
+      outInc.innerHTML = parts.map((p,i)=>`<span style="display:block">条件${i+1}: ${p}</span>`).join('');
+    } else {
+      incResult = parts.join(';');
+      outInc.textContent = incResult;
+    }
+    outInc.className='output-text';
+  }
+
+  // 除外
+  const excGroup = document.getElementById('r_exc_group');
+  const outExc = document.getElementById('r_output_exc');
+  if (fe1||fe2) {
+    excGroup.style.display='block';
+    const excResult = [fe1,fe2].filter(Boolean).join(';');
+    outExc.textContent = excResult;
+    outExc.className='output-text';
+  } else {
+    excGroup.style.display='none';
+  }
+
+  // Alert
+  if (hasAnd) {
+    alert.innerHTML='⚠️ <b>AND条件</b>：仕分けルールでは1つのキーワード欄でのANDは非対応です。<b>ウィザードで複数の条件チェック</b>（「件名に〜」かつ「差出人が〜」など）を組み合わせてください。各キーワードを個別にコピーしてそれぞれの条件に貼り付けてください。';
+    alert.className='alert warn show';
+  } else if (f1||f2||f3) {
+    alert.innerHTML='✓ <b>OR</b>（セミコロン区切り）で「文字の指定」ダイアログに1回で貼り付けできます。除外キーワードは「例外」タブの「文字の指定」に貼り付けてください。';
+    alert.className='alert info show';
+  } else {
+    alert.className='alert';
+  }
+}
+
+// ═══════════════ CHIP INSERT ═══════════════
+function insertChip(ns, word) {
+  for (let i=1; i<=3; i++) {
+    const el = document.getElementById(ns+'_kw'+i);
+    if (el && !el.value.trim()) {
+      el.value = word;
+      el.focus();
+      ns==='s'? updateSearch() : updateRule();
+      // flash
+      const chips = event.target;
+      chips.classList.add('clicked');
+      setTimeout(()=> chips.classList.remove('clicked'), 800);
+      return;
+    }
+  }
+}
+
+// ═══════════════ COPY ═══════════════
+function doCopy(target) {
+  let elId, btnId;
+  if (target==='s')     { elId='s_output';    btnId='s_copy'; }
+  if (target==='r_inc') { elId='r_output_inc'; btnId='r_copy_inc'; }
+  if (target==='r_exc') { elId='r_output_exc'; btnId='r_copy_exc'; }
+
+  const el  = document.getElementById(elId);
+  const btn = document.getElementById(btnId);
+  if (!el || el.classList.contains('empty')) return;
+
+  const text = el.innerText || el.textContent;
+  const origLabel = btn.innerHTML;
+
+  const ok = () => {
+    btn.innerHTML='✅ コピーしました！';
+    btn.classList.add('ok');
+    setTimeout(()=>{ btn.innerHTML=origLabel; btn.classList.remove('ok'); }, 2000);
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(ok).catch(()=> execFallback(text, ok, btn));
+  } else {
+    execFallback(text, ok, btn);
+  }
+}
+
+function execFallback(text, ok, btn) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText='position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); ok(); }
+  catch(e) {
+    // テキスト選択
+    btn.innerHTML='⬆️ Ctrl+C でコピーしてください';
+    btn.style.background='var(--brown2)';
+    setTimeout(()=>{ btn.innerHTML=btn.dataset.orig||'📋 コピーする'; btn.style.background=''; }, 4000);
+  }
+  document.body.removeChild(ta);
+}
+
+// ═══════════════ COPY KW (guide panel) ═══════════════
+function copyKw(el) {
+  const text = el.textContent.replace('📋','').trim();
+  const ok = () => {
+    el.classList.add('copied');
+    const orig = el.innerHTML;
+    el.textContent = '✅ コピー済';
+    setTimeout(() => { el.innerHTML = orig; el.classList.remove('copied'); }, 1200);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(ok).catch(() => { execFallbackKw(text, ok); });
+  } else {
+    execFallbackKw(text, ok);
+  }
+}
+function execFallbackKw(text, ok) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none;';
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand('copy'); ok(); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+</script>
+</body>
+</html>
